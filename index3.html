@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 400px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-log {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .input-container {
+            display: flex;
+            margin-top: 10px;
+        }
+        .input-container input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+        .input-container input[type="submit"] {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            outline: none;
+        }
+        .input-container input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-log" id="chatLog"></div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <input type="button" value="Send" id="Send">
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('Send').addEventListener('click', function() {
+        var inputText = document.getElementById('userInput').value;
+        var responseContainer = document.getElementById('chatLog');
+        // ボタンを無効化し、ローディング中のテキストを表示
+        document.getElementById('Send').disabled = true;
+        document.getElementById('Send').textContent = 'Loading...';
+        fetch('https://mlsa-openai.openai.azure.com/openai/deployments/mlsa-test/chat/completions?api-version=2023-07-01-preview', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        // 危険: APIキーが露出しています
+        'api-key': '777b5f81813d40e188493ff78f36ad3c'
+        },
+        body: JSON.stringify({
+        messages: [{role: 'system', content: 'あなたはチャットbotです。日本語で返答して'}, {role: 'user', content: inputText}],
+        max_tokens: 800,
+        temperature: 0.7,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        top_p: 0.95,
+        stop: null
+        })
+        })
+        .then(response => response.json())
+        .then(data => {
+        // 応答からassistantのメッセージのみを抽出して表示
+        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        responseContainer.innerHTML += "<p><strong>You:</strong> " + inputText + "</p>";
+        responseContainer.innerHTML += "<p><strong>Bot:</strong> " + data.choices[0].message.content + "</p>";
+        } else {
+        responseContainer.innerHTML += "<p>応答が見つかりませんでした。</p>";
+        }
+        })
+        .catch(error => {
+        console.error('Error:', error);
+        })
+        .finally(() => {
+        // ローディングが終了したら、ボタンを再度有効にし、テキストを元に戻す
+        document.getElementById('Send').disabled = false;
+        document.getElementById('Send').textContent = 'Send';
+        });
+        });
+        </script>
+</body>
+</html>
